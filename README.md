@@ -21,7 +21,8 @@
 | `SortedMultiset` | [include/sorted_multiset.hpp](include/sorted_multiset.hpp) |
 | `BucketList` | [include/bucket_list.hpp](include/bucket_list.hpp) |
 
-公開関数には Doxygen 形式の `///` ドキュメントコメントを付けています。
+公開関数には Doxygen 形式の `///` コメントと `@par Examples` / `@code{.cpp}` の使用例を付けています。
+各例はそのままコンパイルできるプログラムで、`python3 tests/doc_examples.py` がコメントから抽出して実行します。
 
 ```cpp
 #include "sorted_set.hpp"
@@ -60,6 +61,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 python3 tests/standalone.py
+python3 tests/doc_examples.py
 ./build/sorted_set_example
 ```
 

@@ -14,6 +14,18 @@
 
 namespace sorted_set {
 /// 重複を許す順序付き多重集合。Compare は狭義弱順序を満たす必要があります。
+///
+/// @par Examples
+/// @code{.cpp}
+/// #include "sorted_multiset.hpp"
+/// #include <cassert>
+/// #include <string>
+///
+/// int main() {
+///     sorted_set::SortedMultiset<int> s{3, 1, 3};
+///     assert(s.size() == 3);
+/// }
+/// @endcode
 template<class T, class Compare = std::less<T>> class SortedMultiset {
 /// 挿入順を保持するバケット方式のリスト。負の添字は末尾から数えます。
 class Storage {
@@ -224,61 +236,334 @@ public:
     }
 public:
     /// 空の集合を作ります。Compare はデフォルト構築されます。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s;
+    ///     assert(s.empty());
+    /// }
+    /// @endcode
     SortedMultiset() = default;
     /// values を compare 順に構築します。重複を保持します。
     /// ソート済みなら O(N)、それ以外は O(N log N)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s(std::vector<int>{3, 1, 3});
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     explicit SortedMultiset(std::vector<T> values, Compare compare = Compare{}) : less_(std::move(compare)) {
         if (!std::is_sorted(values.begin(), values.end(), less_)) std::sort(values.begin(), values.end(), less_);
         data_ = Storage(std::move(values));
     }
     /// 初期化リストを compare 順に構築します。重複を保持します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{3, 1, 3};
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     SortedMultiset(std::initializer_list<T> values, Compare compare = Compare{})
         : SortedMultiset(std::vector<T>(values), std::move(compare)) {}
     /// 半開区間 [first, last) を compare 順に構築します。重複を保持します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     std::vector<int> values{3, 1, 3};
+    ///     sorted_set::SortedMultiset<int> s(values.begin(), values.end());
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     template<class It> SortedMultiset(It first, It last, Compare compare = Compare{})
         : SortedMultiset(std::vector<T>(first, last), std::move(compare)) {}
     /// 格納した要素数を返します。重複も数えます。O(1)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     std::size_t size() const noexcept { return data_.size(); }
     /// 要素がなければ true を返します。O(1)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s;
+    ///     assert(s.empty());
+    ///     s.add(1);
+    ///     assert(!s.empty());
+    /// }
+    /// @endcode
     bool empty() const noexcept { return data_.empty(); }
     /// 内部バケットの読み取り専用ビューを返します。空バケットは含みません。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     std::size_t total = 0;
+    ///     for (const auto& bucket : s.buckets()) {
+    ///         assert(!bucket.empty());
+    ///         total += bucket.size();
+    ///     }
+    ///     assert(total == s.size());
+    /// }
+    /// @endcode
     const std::vector<std::vector<T>>& buckets() const noexcept { return data_.buckets(); }
     /// すべての要素を削除して空にします。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     s.clear();
+    ///     assert(s.empty());
+    ///     assert(s.buckets().empty());
+    /// }
+    /// @endcode
     void clear() noexcept { data_.clear(); }
     /// 先頭の読み取り専用イテレータを返します。空なら end() と一致します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     auto it = s.begin();
+    ///     assert(*it == 1);
+    ///     ++it;
+    ///     assert(*it == 3);
+    /// }
+    /// @endcode
     auto begin() const { return data_.begin(); }
     /// 末尾の次のイテレータを返します。この位置は逆参照できません。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(std::distance(s.begin(), s.end()) == 3);
+    ///     assert(*std::prev(s.end()) == 5);
+    /// }
+    /// @endcode
     auto end() const { return data_.end(); }
     /// begin() と同じ読み取り専用イテレータを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(*s.cbegin() == 1);
+    /// }
+    /// @endcode
     auto cbegin() const { return data_.cbegin(); }
     /// end() と同じ読み取り専用イテレータを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(std::distance(s.cbegin(), s.cend()) == 3);
+    /// }
+    /// @endcode
     auto cend() const { return data_.cend(); }
     /// 末尾から走査する読み取り専用の逆順イテレータを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(*s.rbegin() == 5);
+    /// }
+    /// @endcode
     auto rbegin() const { return data_.rbegin(); }
     /// 逆順走査の終端を返します。この位置は逆参照できません。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     std::vector<int> reversed(s.rbegin(), s.rend());
+    ///     assert((reversed == std::vector<int>{5, 3, 1}));
+    /// }
+    /// @endcode
     auto rend() const { return data_.rend(); }
     /// 添字 i の要素への参照を返します。負の添字は末尾基準です。
     /// @throws std::out_of_range 添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     const sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(s.at(0) == 1);
+    ///     assert(s.at(-1) == 5);
+    ///     bool caught = false;
+    ///     try { s.at(3); } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     const T& at(std::ptrdiff_t i) const { return data_.at(i); }
     /// at(i) と同じ、範囲検査付き添字アクセスです。負数は末尾基準です。
     /// @throws std::out_of_range 添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     const sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(s[0] == 1);
+    ///     assert(s[-1] == 5);
+    ///     bool caught = false;
+    ///     try { (void)s[3]; } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     const T& operator[](std::ptrdiff_t i) const { return at(i); }
     /// i 番目を削除して値を返します。負数は末尾基準で、省略時は末尾です。
     /// @throws std::out_of_range 空の場合、または添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(s.pop() == 5);
+    ///     assert(s.pop(0) == 1);
+    ///     assert(s.size() == 1);
+    ///     bool caught = false;
+    ///     try { s.pop(9); } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     T pop(std::ptrdiff_t i = -1) { return data_.pop(i); }
     /// x が存在するかを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(s.contains(3));
+    ///     assert(!s.contains(2));
+    /// }
+    /// @endcode
     bool contains(const T& x) const {
         if (empty()) return false;
         auto [b, i] = position(x);
         return i != data_.buckets_[b].size() && equivalent(data_.buckets_[b][i], x);
     }
     /// x を比較順序で 1 個追加し、常に true を返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s;
+    ///     assert(s.add(3));
+    ///     assert(s.add(3));
+    ///     assert(s.count(3) == 2);
+    /// }
+    /// @endcode
     bool add(T x) {
         if (empty()) { data_.append(std::move(x)); return true; }
         auto [b, i] = position(x);
         data_.insert_at(b, i, std::move(x)); return true;
     }
     /// x を 1 個だけ削除します。削除できれば true、存在しなければ false です。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{3, 3};
+    ///     assert(s.discard(3));
+    ///     assert(s.count(3) == 1);
+    ///     assert(!s.discard(9));
+    /// }
+    /// @endcode
     bool discard(const T& x) {
         if (empty()) return false;
         auto [b, i] = position(x);
@@ -288,6 +573,20 @@ public:
     // nullptr means no matching neighbor. Ordering follows Compare.
     /// 比較順序で x 未満の最大要素を返します。存在しなければ nullptr。
     /// 返したポインタはコンテナ変更後に再取得してください。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     const int* value = s.lt(3);
+    ///     assert(value && *value == 1);
+    ///     assert(s.lt(1) == nullptr);
+    /// }
+    /// @endcode
     const T* lt(const T& x) const {
         for (auto it = data_.buckets_.rbegin(); it != data_.buckets_.rend(); ++it)
             if (less_(it->front(), x)) return &*std::prev(std::lower_bound(it->begin(), it->end(), x, less_));
@@ -295,6 +594,20 @@ public:
     }
     /// 比較順序で x 以下の最大要素を返します。存在しなければ nullptr。
     /// 返したポインタはコンテナ変更後に再取得してください。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     const int* value = s.le(3);
+    ///     assert(value && *value == 3);
+    ///     assert(s.le(0) == nullptr);
+    /// }
+    /// @endcode
     const T* le(const T& x) const {
         for (auto it = data_.buckets_.rbegin(); it != data_.buckets_.rend(); ++it)
             if (!less_(x, it->front())) return &*std::prev(std::upper_bound(it->begin(), it->end(), x, less_));
@@ -302,6 +615,20 @@ public:
     }
     /// 比較順序で x より大きい最小要素を返します。存在しなければ nullptr。
     /// 返したポインタはコンテナ変更後に再取得してください。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     const int* value = s.gt(3);
+    ///     assert(value && *value == 5);
+    ///     assert(s.gt(5) == nullptr);
+    /// }
+    /// @endcode
     const T* gt(const T& x) const {
         for (const auto& a : data_.buckets_)
             if (less_(x, a.back())) return &*std::upper_bound(a.begin(), a.end(), x, less_);
@@ -309,12 +636,39 @@ public:
     }
     /// 比較順序で x 以上の最小要素を返します。存在しなければ nullptr。
     /// 返したポインタはコンテナ変更後に再取得してください。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     const int* value = s.ge(3);
+    ///     assert(value && *value == 3);
+    ///     assert(s.ge(6) == nullptr);
+    /// }
+    /// @endcode
     const T* ge(const T& x) const {
         for (const auto& a : data_.buckets_)
             if (!less_(a.back(), x)) return &*std::lower_bound(a.begin(), a.end(), x, less_);
         return nullptr;
     }
     /// 比較順序で x 未満の要素数を返します。x が存在しなくても使えます。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(s.index(3) == 1);
+    ///     assert(s.index(4) == 2);
+    /// }
+    /// @endcode
     std::size_t index(const T& x) const {
         std::size_t n = 0;
         for (const auto& a : data_.buckets_) {
@@ -324,6 +678,19 @@ public:
         return n;
     }
     /// 比較順序で x 以下の要素数を返します。x が存在しなくても使えます。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     assert(s.index_right(3) == 2);
+    ///     assert(s.index_right(4) == 2);
+    /// }
+    /// @endcode
     std::size_t index_right(const T& x) const {
         std::size_t n = 0;
         for (const auto& a : data_.buckets_) {
@@ -333,10 +700,50 @@ public:
         return n;
     }
     /// x の出現回数を返します。存在しなければ 0 です。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 3};
+    ///     assert(s.count(3) == 2);
+    ///     assert(s.count(9) == 0);
+    /// }
+    /// @endcode
     std::size_t count(const T& x) const { return index_right(x) - index(x); }
     /// バケット構成によらず、要素の並びを operator== で比較します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     auto copy = s;
+    ///     assert(s == copy);
+    /// }
+    /// @endcode
     bool operator==(const SortedMultiset& rhs) const { return data_ == rhs.data_; }
     /// 要素の並びが異なるかを比較します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "sorted_multiset.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::SortedMultiset<int> s{1, 3, 5};
+    ///     auto copy = s;
+    ///     copy.pop();
+    ///     assert(s != copy);
+    /// }
+    /// @endcode
     bool operator!=(const SortedMultiset& rhs) const { return !(*this == rhs); }
 };
 } // namespace sorted_set

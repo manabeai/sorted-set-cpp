@@ -14,6 +14,18 @@
 
 namespace sorted_set {
 /// 挿入順を保持するバケット方式のリスト。負の添字は末尾から数えます。
+///
+/// @par Examples
+/// @code{.cpp}
+/// #include "bucket_list.hpp"
+/// #include <cassert>
+/// #include <string>
+///
+/// int main() {
+///     sorted_set::BucketList<int> s{3, 1, 3};
+///     assert(s.size() == 3);
+/// }
+/// @endcode
 template<class T> class BucketList {
     std::vector<std::vector<T>> buckets_;
     std::size_t size_ = 0;
@@ -54,8 +66,32 @@ template<class T> class BucketList {
     }
 public:
     /// 空のリストを作ります。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s;
+    ///     assert(s.empty());
+    /// }
+    /// @endcode
     BucketList() = default;
     /// values を順序を保ったままバケットに分割します。O(N)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s(std::vector<int>{3, 1, 3});
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     explicit BucketList(std::vector<T> values) : size_(values.size()) {
         if (values.empty()) return;
         const auto count = static_cast<std::size_t>(std::ceil(std::sqrt(size_ / 16.0)));
@@ -67,42 +103,261 @@ public:
         }
     }
     /// 初期化リストから入力順を保って構築します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s(std::vector<int>{3, 1, 3});
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     BucketList(std::initializer_list<T> values) : BucketList(std::vector<T>(values)) {}
     /// 半開区間 [first, last) から順序を保って構築します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s(std::vector<int>{3, 1, 3});
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     template<class It> BucketList(It first, It last) : BucketList(std::vector<T>(first, last)) {}
     /// 要素をコピーして独立したリストを作ります。T はコピー可能である必要があります。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     sorted_set::BucketList<int> copy(s);
+    ///     assert(copy == s);
+    /// }
+    /// @endcode
     BucketList(const BucketList&) = default;
     /// 要素をコピーして代入します。T はコピー可能である必要があります。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     sorted_set::BucketList<int> copy;
+    ///     copy = s;
+    ///     assert(copy == s);
+    /// }
+    /// @endcode
     BucketList& operator=(const BucketList&) = default;
     /// 所有権を移し、移動元を空にします。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     sorted_set::BucketList<int> moved(std::move(s));
+    ///     assert(moved.size() == 3);
+    ///     assert(s.empty());
+    /// }
+    /// @endcode
     BucketList(BucketList&& other) noexcept
         : buckets_(std::move(other.buckets_)), size_(std::exchange(other.size_, 0)) { other.buckets_.clear(); }
     /// 所有権を移し、移動元を空にします。自己代入は変更しません。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     sorted_set::BucketList<int> moved;
+    ///     moved = std::move(s);
+    ///     assert(moved.size() == 3);
+    ///     assert(s.empty());
+    /// }
+    /// @endcode
     BucketList& operator=(BucketList&& other) noexcept {
         if (this != &other) { buckets_ = std::move(other.buckets_); size_ = std::exchange(other.size_, 0); other.buckets_.clear(); }
         return *this;
     }
     /// 格納した要素数を返します。重複も数えます。O(1)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(s.size() == 3);
+    /// }
+    /// @endcode
     std::size_t size() const noexcept { return size_; }
     /// 要素がなければ true を返します。O(1)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s;
+    ///     assert(s.empty());
+    ///     s.append(1);
+    ///     assert(!s.empty());
+    /// }
+    /// @endcode
     bool empty() const noexcept { return size_ == 0; }
     /// 内部バケットの読み取り専用ビューを返します。空バケットは含みません。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     std::size_t total = 0;
+    ///     for (const auto& bucket : s.buckets()) {
+    ///         assert(!bucket.empty());
+    ///         total += bucket.size();
+    ///     }
+    ///     assert(total == s.size());
+    /// }
+    /// @endcode
     const std::vector<std::vector<T>>& buckets() const noexcept { return buckets_; }
     /// すべての要素を削除して空にします。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     s.clear();
+    ///     assert(s.empty());
+    ///     assert(s.buckets().empty());
+    /// }
+    /// @endcode
     void clear() noexcept { buckets_.clear(); size_ = 0; }
     /// 添字 i の要素への参照を返します。負の添字は末尾基準です。
     /// @throws std::out_of_range 添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     const sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(s.at(0) == 1);
+    ///     assert(s.at(-1) == 5);
+    ///     bool caught = false;
+    ///     try { s.at(3); } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     const T& at(std::ptrdiff_t i) const { auto [b, j] = locate(i); return buckets_[b][j]; }
     /// 添字 i の要素への参照を返します。負の添字は末尾基準です。
     /// @throws std::out_of_range 添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(s.at(0) == 1);
+    ///     assert(s.at(-1) == 5);
+    ///     bool caught = false;
+    ///     try { s.at(3); } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    ///     s.at(-1) = 9;
+    ///     assert(s[-1] == 9);
+    /// }
+    /// @endcode
     T& at(std::ptrdiff_t i) { auto [b, j] = locate(i); return buckets_[b][j]; }
     /// at(i) と同じ、範囲検査付き添字アクセスです。負数は末尾基準です。
     /// @throws std::out_of_range 添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     const sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(s[0] == 1);
+    ///     assert(s[-1] == 5);
+    ///     bool caught = false;
+    ///     try { (void)s[3]; } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     const T& operator[](std::ptrdiff_t i) const { return at(i); }
     /// at(i) と同じ、範囲検査付き添字アクセスです。負数は末尾基準です。
     /// @throws std::out_of_range 添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(s[0] == 1);
+    ///     assert(s[-1] == 5);
+    ///     bool caught = false;
+    ///     try { (void)s[3]; } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    ///     s[-1] = 9;
+    ///     assert(s[-1] == 9);
+    /// }
+    /// @endcode
     T& operator[](std::ptrdiff_t i) { return at(i); }
     /// value を末尾に移動して追加します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     s.append(2);
+    ///     assert(s[-1] == 2);
+    ///     assert(s.size() == 4);
+    /// }
+    /// @endcode
     void append(T value) {
         if (empty()) { buckets_.emplace_back(); buckets_.back().push_back(std::move(value)); size_ = 1; }
         else { const auto b = buckets_.size() - 1; insert_at(b, buckets_[b].size(), std::move(value)); }
@@ -110,6 +365,23 @@ public:
     /// i 番目の直前に value を挿入します。i == size() なら末尾です。
     /// 負数は末尾基準で、空の場合は 0 と -1 のみ有効です。
     /// @throws std::out_of_range 添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     s.insert(-1, 4);
+    ///     assert(s[-2] == 4);
+    ///     assert(s[-1] == 5);
+    ///     bool caught = false;
+    ///     try { s.insert(99, 7); } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     void insert(std::ptrdiff_t i, T value) {
         if (empty()) {
             if (i != 0 && i != -1) throw std::out_of_range("BucketList insert index out of range");
@@ -118,16 +390,77 @@ public:
         else { auto [b, j] = locate(i); insert_at(b, j, std::move(value)); }
     }
     /// 半開区間 [first, last) を末尾に追加します。自分自身のイテレータは渡さないでください。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     std::vector<int> more{2, 4};
+    ///     s.extend(more.begin(), more.end());
+    ///     assert(s[-2] == 2);
+    ///     assert(s[-1] == 4);
+    /// }
+    /// @endcode
     template<class It> void extend(It first, It last) { for (; first != last; ++first) append(*first); }
     /// i 番目を削除して値を返します。負数は末尾基準で、省略時は末尾です。
     /// @throws std::out_of_range 空の場合、または添字が範囲外の場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(s.pop() == 5);
+    ///     assert(s.pop(0) == 1);
+    ///     assert(s.size() == 1);
+    ///     bool caught = false;
+    ///     try { s.pop(9); } catch (const std::out_of_range&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     T pop(std::ptrdiff_t i = -1) { auto [b, j] = locate(i); return remove_at(b, j); }
     /// 要素順をその場で反転します。O(N)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     s.reverse();
+    ///     assert(s[0] == 5);
+    ///     assert(s[-1] == 1);
+    /// }
+    /// @endcode
     void reverse() {
         std::reverse(buckets_.begin(), buckets_.end());
         for (auto& a : buckets_) std::reverse(a.begin(), a.end());
     }
     /// 独立したコピーを返します。T はコピー可能である必要があります。O(N)。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     auto copy = s.copy();
+    ///     copy.append(9);
+    ///     assert(s.size() == 3);
+    ///     assert(copy.size() == 4);
+    /// }
+    /// @endcode
     BucketList copy() const { return *this; }
 
     // Mutations invalidate iterators and references. Iteration is read-only.
@@ -150,52 +483,287 @@ public:
         /// 読み取り専用の要素参照型。
         using reference = const T&;
         /// どのコンテナにも属さないイテレータを作ります。逆参照できません。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     sorted_set::BucketList<int>::const_iterator it;
+        ///     it = s.begin();
+        ///     assert(*it == 1);
+        /// }
+        /// @endcode
         const_iterator() = default;
         /// 現在位置の要素を参照します。end() や未初期化イテレータは逆参照できません。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     auto it = s.begin();
+        ///     assert(*it == 1);
+        /// }
+        /// @endcode
         reference operator*() const { return owner_->buckets_[bucket_][offset_]; }
         /// 現在位置の要素ポインタを返します。有効な要素を指す必要があります。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<std::string> s{"hello"};
+        ///     assert(s.begin()->size() == 5);
+        /// }
+        /// @endcode
         pointer operator->() const { return &**this; }
         /// 次の要素へ進めます。end() には適用できません。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     auto it = s.begin();
+        ///     assert(*++it == 3);
+        /// }
+        /// @endcode
         const_iterator& operator++() {
             if (++offset_ == owner_->buckets_[bucket_].size()) { ++bucket_; offset_ = 0; }
             return *this;
         }
         /// 次へ進め、変更前のイテレータを返します。end() には適用できません。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     auto it = s.begin();
+        ///     assert(*it++ == 1);
+        ///     assert(*it == 3);
+        /// }
+        /// @endcode
         const_iterator operator++(int) { auto old = *this; ++*this; return old; }
         /// 前の要素へ進めます。非空コンテナの end() は可、begin() は不可です。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     auto it = s.end();
+        ///     assert(*--it == 5);
+        /// }
+        /// @endcode
         const_iterator& operator--() {
             if (offset_ == 0) { --bucket_; offset_ = owner_->buckets_[bucket_].size(); }
             --offset_; return *this;
         }
         /// 前へ進め、変更前のイテレータを返します。begin() には適用できません。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     auto it = std::prev(s.end());
+        ///     assert(*it-- == 5);
+        ///     assert(*it == 3);
+        /// }
+        /// @endcode
         const_iterator operator--(int) { auto old = *this; --*this; return old; }
         /// 所有コンテナと位置の両方が一致するか比較します。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     assert(s.begin() == s.begin());
+        /// }
+        /// @endcode
         bool operator==(const const_iterator& rhs) const {
             return owner_ == rhs.owner_ && bucket_ == rhs.bucket_ && offset_ == rhs.offset_;
         }
         /// 所有コンテナまたは位置が異なるか比較します。
+        ///
+        /// @par Examples
+        /// @code{.cpp}
+        /// #include "bucket_list.hpp"
+        /// #include <cassert>
+        /// #include <string>
+        ///
+        /// int main() {
+        ///     sorted_set::BucketList<int> s{1, 3, 5};
+        ///     assert(s.begin() != s.end());
+        /// }
+        /// @endcode
         bool operator!=(const const_iterator& rhs) const { return !(*this == rhs); }
     };
     /// 読み取り専用の逆順イテレータ型。
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     /// 先頭の読み取り専用イテレータを返します。空なら end() と一致します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     auto it = s.begin();
+    ///     assert(*it == 1);
+    ///     ++it;
+    ///     assert(*it == 3);
+    /// }
+    /// @endcode
     const_iterator begin() const { return {this, 0, 0}; }
     /// 末尾の次のイテレータを返します。この位置は逆参照できません。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(std::distance(s.begin(), s.end()) == 3);
+    ///     assert(*std::prev(s.end()) == 5);
+    /// }
+    /// @endcode
     const_iterator end() const { return {this, buckets_.size(), 0}; }
     /// begin() と同じ読み取り専用イテレータを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(*s.cbegin() == 1);
+    /// }
+    /// @endcode
     const_iterator cbegin() const { return begin(); }
     /// end() と同じ読み取り専用イテレータを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(std::distance(s.cbegin(), s.cend()) == 3);
+    /// }
+    /// @endcode
     const_iterator cend() const { return end(); }
     /// 末尾から走査する読み取り専用の逆順イテレータを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(*s.rbegin() == 5);
+    /// }
+    /// @endcode
     const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
     /// 逆順走査の終端を返します。この位置は逆参照できません。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     std::vector<int> reversed(s.rbegin(), s.rend());
+    ///     assert((reversed == std::vector<int>{5, 3, 1}));
+    /// }
+    /// @endcode
     const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
     /// x が存在するかを返します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     assert(s.contains(3));
+    ///     assert(!s.contains(2));
+    /// }
+    /// @endcode
     bool contains(const T& x) const { return std::find(begin(), end(), x) != end(); }
     /// x の出現回数を返します。存在しなければ 0 です。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 3};
+    ///     assert(s.count(3) == 2);
+    ///     assert(s.count(9) == 0);
+    /// }
+    /// @endcode
     std::size_t count(const T& x) const { return static_cast<std::size_t>(std::count(begin(), end(), x)); }
     /// x が最初に現れる添字を返します。O(N)。
     /// @throws std::invalid_argument x が存在しない場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{3, 1, 3};
+    ///     assert(s.index(3) == 0);
+    ///     bool caught = false;
+    ///     try { s.index(9); } catch (const std::invalid_argument&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     std::size_t index(const T& x) const {
         auto found = std::find(begin(), end(), x);
         if (found == end()) throw std::invalid_argument("BucketList value not found");
@@ -203,10 +771,54 @@ public:
     }
     /// x の最初の出現を 1 個削除します。O(N)。
     /// @throws std::invalid_argument x が存在しない場合。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{3, 1, 3};
+    ///     s.remove(3);
+    ///     assert(s[0] == 1);
+    ///     assert(s.count(3) == 1);
+    ///     bool caught = false;
+    ///     try { s.remove(9); } catch (const std::invalid_argument&) { caught = true; }
+    ///     assert(caught);
+    /// }
+    /// @endcode
     void remove(const T& x) { pop(static_cast<std::ptrdiff_t>(index(x))); }
     /// バケット構成によらず、要素の並びを operator== で比較します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     auto copy = s;
+    ///     assert(s == copy);
+    /// }
+    /// @endcode
     bool operator==(const BucketList& rhs) const { return size_ == rhs.size_ && std::equal(begin(), end(), rhs.begin()); }
     /// 要素の並びが異なるかを比較します。
+    ///
+    /// @par Examples
+    /// @code{.cpp}
+    /// #include "bucket_list.hpp"
+    /// #include <cassert>
+    /// #include <string>
+    ///
+    /// int main() {
+    ///     sorted_set::BucketList<int> s{1, 3, 5};
+    ///     auto copy = s;
+    ///     copy.pop();
+    ///     assert(s != copy);
+    /// }
+    /// @endcode
     bool operator!=(const BucketList& rhs) const { return !(*this == rhs); }
 };
 

@@ -17,3 +17,6 @@ jobs:
       - run: python3 tests/standalone.py
         env:
           CXX: ${{ matrix.compiler }}
+      - run: python3 tests/doc_examples.py
+        env:
+          CXX: ${{ matrix.compiler }}
