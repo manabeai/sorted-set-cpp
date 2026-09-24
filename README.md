@@ -10,10 +10,22 @@
 
 ## 導入
 
-`include/sorted_set.hpp` をコピーし、C++17 以降でコンパイルしてください。
+必要な型のファイルをコピーし、C++17 以降でコンパイルしてください。
+各ファイルは標準ライブラリだけに依存し、他の実装ファイルは不要です。
+ヘッダーの内容全体を提出コードの先頭へ直接貼り付ける場合、そのヘッダーへの `#include` は不要です。
+複数種類を同じコードに貼り付けても利用できます。
+
+| 型 | 単独で使えるファイル |
+| --- | --- |
+| `SortedSet` | [include/sorted_set.hpp](include/sorted_set.hpp) |
+| `SortedMultiset` | [include/sorted_multiset.hpp](include/sorted_multiset.hpp) |
+| `BucketList` | [include/bucket_list.hpp](include/bucket_list.hpp) |
+
+公開関数には Doxygen 形式の `///` ドキュメントコメントを付けています。
 
 ```cpp
 #include "sorted_set.hpp"
+#include "sorted_multiset.hpp"
 #include <cassert>
 
 int main() {
@@ -47,6 +59,7 @@ CMake のプロジェクトからは `add_subdirectory(path/to/sorted-set-cpp)` 
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
+python3 tests/standalone.py
 ./build/sorted_set_example
 ```
 

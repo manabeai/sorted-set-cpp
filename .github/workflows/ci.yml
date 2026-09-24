@@ -14,3 +14,6 @@ jobs:
       - run: cmake --build build --parallel
       - run: ctest --test-dir build --output-on-failure
       - run: ./build/sorted_set_example
+      - run: python3 tests/standalone.py
+        env:
+          CXX: ${{ matrix.compiler }}

@@ -1,4 +1,6 @@
 #include "sorted_set.hpp"
+#include "sorted_multiset.hpp"
+#include "bucket_list.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -19,7 +21,7 @@ void neighbor(const int* p, const std::vector<int>& v, std::size_t i) {
     else { CHECK(p != nullptr); CHECK(*p == v[i]); }
 }
 template<bool Multi> void randomized() {
-    sorted_set::SortedCollection<int, Multi> s;
+    std::conditional_t<Multi, sorted_set::SortedMultiset<int>, sorted_set::SortedSet<int>> s;
     std::conditional_t<Multi, std::multiset<int>, std::set<int>> ref;
     std::mt19937 rng(812);
     for (int step = 0; step < 15000; ++step) {

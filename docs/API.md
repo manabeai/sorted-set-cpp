@@ -2,6 +2,8 @@
 
 ```cpp
 #include "sorted_set.hpp"
+#include "sorted_multiset.hpp"
+#include "bucket_list.hpp"
 using sorted_set::SortedSet;
 using sorted_set::SortedMultiset;
 using sorted_set::BucketList;
@@ -13,7 +15,7 @@ using sorted_set::BucketList;
 - `SortedMultiset<T, Compare = std::less<T>>`
 - `BucketList<T>`
 
-集合型は `SortedCollection<T, bool Multi, Compare>` のエイリアスです。
+各型は個別のヘッダーに定義され、他の実装ファイルには依存しません。必要な型のヘッダーだけをコピーして利用できます。
 `Compare` は strict weak ordering（狭義弱順序）を満たす必要があります。
 重複は `!comp(a, b) && !comp(b, a)` で判定します。
 近傍検索・順位はこの比較順序に従います。

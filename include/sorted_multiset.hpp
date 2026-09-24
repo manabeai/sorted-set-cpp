@@ -1,5 +1,5 @@
-#ifndef SORTED_SET_SORTED_SET_HPP
-#define SORTED_SET_SORTED_SET_HPP
+#ifndef SORTED_SET_SORTED_MULTISET_HPP
+#define SORTED_SET_SORTED_MULTISET_HPP
 
 // Port of tatyam-prime/SortedSet, released under the Unlicense.
 #include <algorithm>
@@ -13,8 +13,8 @@
 #include <vector>
 
 namespace sorted_set {
-/// 重複を除く順序付き集合。Compare は狭義弱順序を満たす必要があります。
-template<class T, class Compare = std::less<T>> class SortedSet {
+/// 重複を許す順序付き多重集合。Compare は狭義弱順序を満たす必要があります。
+template<class T, class Compare = std::less<T>> class SortedMultiset {
 /// 挿入順を保持するバケット方式のリスト。負の添字は末尾から数えます。
 class Storage {
 public:
@@ -224,21 +224,19 @@ public:
     }
 public:
     /// 空の集合を作ります。Compare はデフォルト構築されます。
-    SortedSet() = default;
-    /// values を compare 順に構築します。重複を除去します。
+    SortedMultiset() = default;
+    /// values を compare 順に構築します。重複を保持します。
     /// ソート済みなら O(N)、それ以外は O(N log N)。
-    explicit SortedSet(std::vector<T> values, Compare compare = Compare{}) : less_(std::move(compare)) {
+    explicit SortedMultiset(std::vector<T> values, Compare compare = Compare{}) : less_(std::move(compare)) {
         if (!std::is_sorted(values.begin(), values.end(), less_)) std::sort(values.begin(), values.end(), less_);
-        values.erase(std::unique(values.begin(), values.end(),
-            [this](const T& a, const T& b) { return equivalent(a, b); }), values.end());
         data_ = Storage(std::move(values));
     }
-    /// 初期化リストを compare 順に構築します。重複を除去します。
-    SortedSet(std::initializer_list<T> values, Compare compare = Compare{})
-        : SortedSet(std::vector<T>(values), std::move(compare)) {}
-    /// 半開区間 [first, last) を compare 順に構築します。重複を除去します。
-    template<class It> SortedSet(It first, It last, Compare compare = Compare{})
-        : SortedSet(std::vector<T>(first, last), std::move(compare)) {}
+    /// 初期化リストを compare 順に構築します。重複を保持します。
+    SortedMultiset(std::initializer_list<T> values, Compare compare = Compare{})
+        : SortedMultiset(std::vector<T>(values), std::move(compare)) {}
+    /// 半開区間 [first, last) を compare 順に構築します。重複を保持します。
+    template<class It> SortedMultiset(It first, It last, Compare compare = Compare{})
+        : SortedMultiset(std::vector<T>(first, last), std::move(compare)) {}
     /// 格納した要素数を返します。重複も数えます。O(1)。
     std::size_t size() const noexcept { return data_.size(); }
     /// 要素がなければ true を返します。O(1)。
@@ -274,13 +272,10 @@ public:
         auto [b, i] = position(x);
         return i != data_.buckets_[b].size() && equivalent(data_.buckets_[b][i], x);
     }
-    /// x を比較順序で挿入します。集合では既存なら false、新規なら true。
+    /// x を比較順序で 1 個追加し、常に true を返します。
     bool add(T x) {
         if (empty()) { data_.append(std::move(x)); return true; }
         auto [b, i] = position(x);
-        {
-            if (i != data_.buckets_[b].size() && equivalent(data_.buckets_[b][i], x)) return false;
-        }
         data_.insert_at(b, i, std::move(x)); return true;
     }
     /// x を 1 個だけ削除します。削除できれば true、存在しなければ false です。
@@ -340,10 +335,10 @@ public:
     /// x の出現回数を返します。存在しなければ 0 です。
     std::size_t count(const T& x) const { return index_right(x) - index(x); }
     /// バケット構成によらず、要素の並びを operator== で比較します。
-    bool operator==(const SortedSet& rhs) const { return data_ == rhs.data_; }
+    bool operator==(const SortedMultiset& rhs) const { return data_ == rhs.data_; }
     /// 要素の並びが異なるかを比較します。
-    bool operator!=(const SortedSet& rhs) const { return !(*this == rhs); }
+    bool operator!=(const SortedMultiset& rhs) const { return !(*this == rhs); }
 };
 } // namespace sorted_set
 
-#endif // SORTED_SET_SORTED_SET_HPP
+#endif // SORTED_SET_SORTED_MULTISET_HPP
